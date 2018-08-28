@@ -1,4 +1,4 @@
-package pt.outsystems.gdrive.downloader;
+package pt.outsystems.gdrive.downloader.domain;
 
 import com.google.gson.annotations.SerializedName;
 

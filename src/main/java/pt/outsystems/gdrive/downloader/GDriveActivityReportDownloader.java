@@ -2,6 +2,11 @@ package pt.outsystems.gdrive.downloader;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.opencsv.CSVWriter;
+import pt.outsystems.gdrive.downloader.domain.ServiceAccountCredentials;
+import pt.outsystems.gdrive.downloader.domain.report.Event;
+import pt.outsystems.gdrive.downloader.domain.report.Item;
+import pt.outsystems.gdrive.downloader.domain.report.Report;
 import pt.outsystems.gdrive.downloader.jws.AccessToken;
 import pt.outsystems.gdrive.downloader.jws.JwtHeader;
 import pt.outsystems.gdrive.downloader.jws.JwtClaimSet;
@@ -17,7 +22,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.*;
 
 /**
- * FIXME: under construction.
+ * Google drive audit activity report downloader.
  */
 public class GDriveActivityReportDownloader {
 
@@ -37,7 +42,12 @@ public class GDriveActivityReportDownloader {
     private static final String DEFAULT_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:jwt-bearer";
 
     /**
-     * Contains requested scopes for Reports API.
+     * URL to Google Audit Activity report for drive application.
+     */
+    private static final String GOOGLE_DRIVE_ACTIVITY_REPORT_API_URL = "https://www.googleapis.com/admin/reports/v1/activity/users/all/applications/drive";
+
+    /**
+     * Contains requested scopes for Report API.
      */
     private List<String> scopes = Arrays.asList("https://www.googleapis.com/auth/admin.reports.audit.readonly",
             "https://www.googleapis.com/auth/admin.reports.usage.readonly");
@@ -62,6 +72,59 @@ public class GDriveActivityReportDownloader {
         JsonReader jsonReader = new JsonReader(new FileReader(fileName));
 
         return gson.fromJson(jsonReader, ServiceAccountCredentials.class);
+    }
+
+    /**
+     * Request Google audit activity reports.
+     *
+     * @param accessToken   - oauth access token
+     * @param startDateStr  - start date to search data
+     * @param endDateStr    - end date to search data
+     *
+     * @throws IOException -
+     *
+     * @return Report
+     */
+    public Report loadReports(AccessToken accessToken, String startDateStr, String endDateStr) throws IOException {
+        String urlString = GOOGLE_DRIVE_ACTIVITY_REPORT_API_URL + "?start-date=" + startDateStr + "&end-date=" + endDateStr;
+
+        URL url = new URL(urlString);
+        HttpsURLConnection urlConnection = (HttpsURLConnection) url.openConnection();
+
+        // optional default is GET
+        urlConnection.setRequestMethod("GET");
+        urlConnection.setDoInput(true);
+
+        // Add request header.
+        urlConnection.setRequestProperty("Authorization", "Bearer " + accessToken.getValue());
+
+        int responseCode = urlConnection.getResponseCode();
+
+        System.out.println("\nSending 'GET' request to URL : " + urlString); // FIXME: remove this.
+        System.out.println("Response Code : " + responseCode); // FIXME: remove this.
+
+        BufferedReader bufferedReader;
+
+        if (responseCode == 200) {
+            bufferedReader = new BufferedReader(
+                    new InputStreamReader(urlConnection.getInputStream()));
+        } else {
+            bufferedReader = new BufferedReader(
+                    new InputStreamReader(urlConnection.getErrorStream()));
+        }
+
+        String inputLine;
+        StringBuffer stringBuffer = new StringBuffer();
+
+        while ((inputLine = bufferedReader.readLine()) != null) {
+            stringBuffer.append(inputLine);
+        }
+
+        bufferedReader.close();
+
+        System.out.println(stringBuffer.toString()); // FIXME: remove this.
+
+        return gson.fromJson(stringBuffer.toString(), Report.class);
     }
 
     /**
@@ -117,6 +180,84 @@ public class GDriveActivityReportDownloader {
         bufferedReader.close();
 
         return gson.fromJson(responseStringBuilder.toString(), AccessToken.class);
+    }
+
+    /**
+     * Save {@link Report} to CSV file.
+     *
+     * @param csvFileName   - CSV file path
+     * @param report        - source report object
+     *
+     * @throws IOException  -
+     */
+    public void saveReport(String csvFileName, Report report) throws IOException {
+        CSVWriter csvWriter = null;
+
+        try {
+            csvWriter = new CSVWriter(new FileWriter(csvFileName));
+
+            String[] headers = {
+                    "Kind",
+                    "Time",
+                    "Unique Qualifier",
+                    "Application Name",
+                    "Customer Id",
+                    "Caller Type",
+                    "Email",
+                    "Profile Id",
+                    "Key",
+                    "Owner Domain",
+                    "IP Address",
+                    "Event type",
+                    "Event edit",
+                    "Event parameters",
+            };
+
+            csvWriter.writeNext(headers);
+
+            for (Item item : report.getItems()) {
+                String[] itemRowData = new String[11];
+
+                itemRowData[0] = item.getKind();
+                itemRowData[1] = item.getId().getTime();
+                itemRowData[2] = item.getId().getUniqQualifier();
+                itemRowData[3] = item.getId().getApplicationName();
+                itemRowData[4] = item.getId().getCustomerId();
+                itemRowData[5] = item.getActor().getCallerType();
+                itemRowData[6] = item.getActor().getEmail();
+                itemRowData[7] = item.getActor().getProfileId();
+                itemRowData[8] = item.getActor().getKey();
+                itemRowData[9] = item.getOwnerDomain();
+                itemRowData[10] = item.getIpAddress();
+
+                csvWriter.writeNext(itemRowData);
+
+                for (Event event : item.getEvents()) {
+                    String[] eventRowData = new String[headers.length];
+
+                    // Fill item related cells with empty values.
+                    for (int i = 0; i < 12; i++) {
+                        eventRowData[i] = "";
+                    }
+
+                    eventRowData[11] = event.getType();
+                    eventRowData[12] = event.getEdit();
+                    eventRowData[13] = event.getParametersAsString();
+
+                    csvWriter.writeNext(eventRowData);
+                }
+            }
+        } catch (IOException ioException) {
+            throw new IOException(ioException);
+        } finally {
+            if (csvWriter != null) {
+                try {
+                    csvWriter.close();
+                } catch (IOException closeException) {
+                    closeException.printStackTrace();
+                }
+            }
+        }
     }
 
     /**
