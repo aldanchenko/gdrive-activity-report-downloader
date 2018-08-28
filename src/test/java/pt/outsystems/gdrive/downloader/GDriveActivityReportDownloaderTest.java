@@ -1,6 +1,7 @@
 package pt.outsystems.gdrive.downloader;
 
 import org.junit.Test;
+import pt.outsystems.gdrive.downloader.domain.ServiceAccountCredentials;
 import pt.outsystems.gdrive.downloader.jws.AccessToken;
 
 import java.io.*;
