@@ -292,7 +292,7 @@ public class GDriveActivityReportDownloader {
 
         String jwtContentStr = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(jwtHeaderJsonStr.getBytes())
                 + "."
-                + com.google.api.client.util.Base64.encodeBase64URLSafeString(jwtClaimSetJsonStr.getBytes());
+                + org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(jwtClaimSetJsonStr.getBytes());
 
         byte[] contentBytes = getUtf8Bytes(jwtContentStr);
 
@@ -331,7 +331,7 @@ public class GDriveActivityReportDownloader {
 
         return org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(jwtHeaderJsonStr.getBytes())
                 + "."
-                + com.google.api.client.util.Base64.encodeBase64URLSafeString(jwtClaimSetJsonStr.getBytes());
+                + org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(jwtClaimSetJsonStr.getBytes());
     }
 
     /**
