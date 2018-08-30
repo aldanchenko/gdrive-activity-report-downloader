@@ -21,7 +21,7 @@ public class GDriveActivityReportDownloaderApplication {
      * @param parameters - console parameters
      */
     public static void main(String[] parameters) throws IOException, GeneralSecurityException {
-        if (parameters.length != 1) {
+        if (parameters.length != 3) {
             throw new IllegalArgumentException("Please, provide parameters (file path to JSON, start date, end date.");
         }
 
