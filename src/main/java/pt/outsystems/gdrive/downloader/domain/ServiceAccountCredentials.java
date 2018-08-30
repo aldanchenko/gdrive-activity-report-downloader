@@ -37,6 +37,9 @@ public class ServiceAccountCredentials {
     @SerializedName("client_x509_cert_url")
     private String clientX509CertUrl;
 
+    @SerializedName("admin_email")
+    private String adminEmail;
+
     public String getProjectId() {
         return projectId;
     }
@@ -115,5 +118,13 @@ public class ServiceAccountCredentials {
 
     public void setClientX509CertUrl(String clientX509CertUrl) {
         this.clientX509CertUrl = clientX509CertUrl;
+    }
+
+    public String getAdminEmail() {
+        return adminEmail;
+    }
+
+    public void setAdminEmail(String adminEmail) {
+        this.adminEmail = adminEmail;
     }
 }

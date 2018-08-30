@@ -20,7 +20,7 @@ public class JwtClaimSet {
     private String scope;
 
     @SerializedName("sub")
-    private String delegatedAccessEmail;
+    private String subject;
 
     /**
      * Builder for {@link JwtClaimSet}.
@@ -31,13 +31,13 @@ public class JwtClaimSet {
         private String issuer;
         private String audience;
         private String scope;
-        private String delegatedAccessEmail;
+        private String subject;
 
         public JwtClaimSet build() {
             JwtClaimSet jwtClaimSet = new JwtClaimSet();
 
             jwtClaimSet.setAudience(this.audience);
-            jwtClaimSet.setDelegatedAccessEmail(this.delegatedAccessEmail);
+            jwtClaimSet.setSubject(this.subject);
             jwtClaimSet.setExpirationTimeSeconds(this.expirationTimeSeconds);
             jwtClaimSet.setIssuedAtTimeSeconds(this.issuedAtTimeSeconds);
             jwtClaimSet.setIssuer(this.issuer);
@@ -76,8 +76,8 @@ public class JwtClaimSet {
             return this;
         }
 
-        public Builder delegatedAccessEmail(String delegatedAccessEmail) {
-            this.delegatedAccessEmail = delegatedAccessEmail;
+        public Builder subject(String delegatedAccessEmail) {
+            this.subject = delegatedAccessEmail;
 
             return this;
         }
@@ -123,11 +123,11 @@ public class JwtClaimSet {
         this.scope = scope;
     }
 
-    public String getDelegatedAccessEmail() {
-        return delegatedAccessEmail;
+    public String getSubject() {
+        return subject;
     }
 
-    public void setDelegatedAccessEmail(String delegatedAccessEmail) {
-        this.delegatedAccessEmail = delegatedAccessEmail;
+    public void setSubject(String subject) {
+        this.subject = subject;
     }
 }

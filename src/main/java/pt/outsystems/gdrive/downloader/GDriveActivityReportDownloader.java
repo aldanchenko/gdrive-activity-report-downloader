@@ -97,6 +97,9 @@ public class GDriveActivityReportDownloader {
 
         // Add request header.
         urlConnection.setRequestProperty("Authorization", "Bearer " + accessToken.getValue());
+        urlConnection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        urlConnection.setRequestProperty("User-Agent", "Google-HTTP-Java-Client/1.19.0 (gzip)");
+        urlConnection.setRequestProperty("Accept-Charset", "UTF-8");
 
         int responseCode = urlConnection.getResponseCode();
 
@@ -142,7 +145,7 @@ public class GDriveActivityReportDownloader {
         }
 
         String jwt = buildJwt(serviceAccountCredentials);
-        String signature = buildSignature(serviceAccountCredentials);
+        String signature = buildSignature(serviceAccountCredentials, jwt);
 
         String jsonWebSignature = jwt + "." + signature;
 
@@ -269,37 +272,14 @@ public class GDriveActivityReportDownloader {
      *
      * @return String
      */
-    private String buildSignature(ServiceAccountCredentials serviceAccountCredentials)
+    private String buildSignature(ServiceAccountCredentials serviceAccountCredentials, String jwtContentStr)
                             throws UnsupportedEncodingException, GeneralSecurityException {
-        JwtHeader jwtHeader = new JwtHeader.Builder()
-                .algorithm(DEFAULT_ALGORITHM)
-                .type(JWT_DEFAULT_TYPE)
-                .keyId(serviceAccountCredentials.getPrivateKeyId())
-                .build();
-
-        long currentTime = System.currentTimeMillis();
-
-        JwtClaimSet jwtClaimSet = new JwtClaimSet.Builder()
-                .issuer(serviceAccountCredentials.getClientEmail())
-                .issuedAtTimeSeconds(currentTime / 1000L)
-                .expirationTimeSeconds(currentTime / 1000L + 3600L)
-                .scope(getScopesString())
-                .audience(serviceAccountCredentials.getTokenUri())
-                .build();
-
-        String jwtHeaderJsonStr = gson.toJson(jwtHeader);
-        String jwtClaimSetJsonStr = gson.toJson(jwtClaimSet);
-
-        String jwtContentStr = org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(jwtHeaderJsonStr.getBytes())
-                + "."
-                + org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(jwtClaimSetJsonStr.getBytes());
-
         byte[] contentBytes = getUtf8Bytes(jwtContentStr);
 
-        byte[] jsonWebSignature = signWithAlgorithm(getSha256WithRsaSignatureAlgorithm(),
+        byte[] signature = signWithAlgorithm(getSha256WithRsaSignatureAlgorithm(),
                                         createRsaPrivateKey(serviceAccountCredentials.getPrivateKey()), contentBytes);
 
-        return org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(jsonWebSignature);
+        return org.apache.commons.codec.binary.Base64.encodeBase64URLSafeString(signature);
     }
 
     /**
@@ -324,6 +304,7 @@ public class GDriveActivityReportDownloader {
                 .expirationTimeSeconds(currentTime / 1000L + 3600L)
                 .scope(getScopesString())
                 .audience(serviceAccountCredentials.getTokenUri())
+                .subject(serviceAccountCredentials.getAdminEmail())
                 .build();
 
         String jwtHeaderJsonStr = gson.toJson(jwtHeader);
