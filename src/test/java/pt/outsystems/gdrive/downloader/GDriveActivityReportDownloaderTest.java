@@ -2,6 +2,7 @@ package pt.outsystems.gdrive.downloader;
 
 import org.junit.Test;
 import pt.outsystems.gdrive.downloader.domain.ServiceAccountCredentials;
+import pt.outsystems.gdrive.downloader.domain.report.Report;
 import pt.outsystems.gdrive.downloader.jws.AccessToken;
 
 import java.io.*;
@@ -50,5 +51,20 @@ public class GDriveActivityReportDownloaderTest {
         assertNotNull(accessToken);
 
         reportDownloader.loadReports(accessToken, "2018-08-01", "2018-10-01");
+    }
+
+    @Test
+    public void testGetReportsAndSaveToCsvFile() throws IOException, GeneralSecurityException {
+        GDriveActivityReportDownloader reportDownloader = new GDriveActivityReportDownloader();
+
+        ServiceAccountCredentials serviceAccountCredentials = reportDownloader.loadCredentials(jsonFilePathStr);
+
+        AccessToken accessToken = reportDownloader.authorize(serviceAccountCredentials);
+
+        assertNotNull(accessToken);
+
+        Report report = reportDownloader.loadReports(accessToken, "2018-08-01", "2018-10-01");
+
+        reportDownloader.saveReport("gdrive-activity-report.csv", report);
     }
 }

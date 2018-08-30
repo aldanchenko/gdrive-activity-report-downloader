@@ -103,9 +103,6 @@ public class GDriveActivityReportDownloader {
 
         int responseCode = urlConnection.getResponseCode();
 
-        System.out.println("\nSending 'GET' request to URL : " + urlString); // FIXME: remove this.
-        System.out.println("Response Code : " + responseCode); // FIXME: remove this.
-
         BufferedReader bufferedReader;
 
         if (responseCode == 200) {
@@ -124,8 +121,6 @@ public class GDriveActivityReportDownloader {
         }
 
         bufferedReader.close();
-
-        System.out.println(stringBuffer.toString()); // FIXME: remove this.
 
         return gson.fromJson(stringBuffer.toString(), Report.class);
     }
